@@ -1,14 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"image/jpeg"
-	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -230,29 +228,6 @@ func Decode(in string, obj interface{}) {
 	if err != nil {
 		fmt.Println(err)
 	}
-}
-
-func MustReadStdin() string {
-	r := bufio.NewReader(os.Stdin)
-
-	var in string
-	for {
-		var err error
-		in, err = r.ReadString('\n')
-		if err != io.EOF {
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-		in = strings.TrimSpace(in)
-		if len(in) > 0 {
-			break
-		}
-	}
-
-	fmt.Println("")
-
-	return in
 }
 
 func zip(in []byte) []byte {
