@@ -148,36 +148,55 @@ func setupWebrtc(clientOffer string) string {
 	peerConnection.OnDataChannel(func(d *webrtc.DataChannel) {
 		fmt.Printf("New DataChannel %s %d\n", d.Label(), d.ID())
 
-		// if d.Label() == "foo" {
-		// Register channel opening handling
-		d.OnOpen(func() {
-			fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", d.Label(), d.ID())
-			for {
-				// start := time.Now()
-				data, _ := screenshot.Capture(0, 0, 640, 480)
-				go func() {
-					buf := new(bytes.Buffer)
-					jpeg.Encode(buf, data, nil)
-					img := buf.Bytes()
-					d.Send(img)
-				}()
-				// elapsed := time.Since(start)
-				// fmt.Println(elapsed)
-			}
-		})
-		// } else if d.Label() == "mouse" {
-		// Register text message handling
-		go func() {
-			d.OnMessage(func(msg webrtc.DataChannelMessage) {
-				fmt.Printf("Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
-				coords := strings.Split(string(msg.Data), ",")
-				x, _ := strconv.Atoi(coords[0])
-				y, _ := strconv.Atoi(coords[1])
-				robotgo.Move(x, y)
+		if d.Label() == "foo" {
+			// Register channel opening handling
+			d.OnOpen(func() {
+				fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", d.Label(), d.ID())
+				for {
+					// start := time.Now()
+					data, _ := screenshot.Capture(0, 0, 640, 480)
+					go func() {
+						buf := new(bytes.Buffer)
+						jpeg.Encode(buf, data, nil)
+						img := buf.Bytes()
+						d.Send(img)
+					}()
+					// elapsed := time.Since(start)
+					// fmt.Println(elapsed)
+				}
 			})
-		}()
 
-		// }
+			go func() {
+				d.OnMessage(func(msg webrtc.DataChannelMessage) {
+					fmt.Printf("Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
+					coords := strings.Split(string(msg.Data), ",")
+					x, _ := strconv.Atoi(coords[0])
+					y, _ := strconv.Atoi(coords[1])
+					robotgo.Move(x, y)
+				})
+			}()
+
+		} else if d.Label() == "click" {
+			d.OnOpen(func() {
+				fmt.Println("Click channel listener attached")
+			})
+
+			go func() {
+				d.OnMessage(func(msg webrtc.DataChannelMessage) {
+					action := string(msg.Data)
+					switch action {
+					case "ld":
+						robotgo.MouseToggle("left")
+					case "rd":
+						robotgo.MouseToggle("right")
+					case "lu":
+						robotgo.MouseToggle("left")
+					case "ru":
+						robotgo.MouseToggle("right")
+					}
+				})
+			}()
+		}
 
 	})
 
