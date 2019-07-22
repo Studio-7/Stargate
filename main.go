@@ -186,9 +186,9 @@ func setupWebrtc(clientOffer string) string {
 					action := string(msg.Data)
 					switch action {
 					case "ld":
-						robotgo.MouseToggle("left")
+						robotgo.MouseClick("left")
 					case "rd":
-						robotgo.MouseToggle("right")
+						robotgo.MouseClick("right")
 					case "lu":
 						robotgo.MouseToggle("left")
 					case "ru":
