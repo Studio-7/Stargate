@@ -196,6 +196,18 @@ func setupWebrtc(clientOffer string) string {
 					}
 				})
 			}()
+		} else if d.Label() == "key" {
+			d.OnOpen(func() {
+				fmt.Println("Key channel listener attached")
+			})
+
+			go func() {
+				d.OnMessage(func(msg webrtc.DataChannelMessage) {
+					action := string(msg.Data)
+					fmt.Println(action)
+					robotgo.KeyTap(action)
+				})
+			}()
 		}
 
 	})
