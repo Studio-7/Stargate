@@ -46,7 +46,7 @@ func randString(n int) string {
 	return string(b)
 }
 
-// calls the signalling server with games and id
+// Calls the signalling server with games and id
 func signalInit() {
 	initMsg := ServerMsg{
 		Type:  1,
@@ -120,9 +120,6 @@ func serverInit() {
 }
 
 func setupWebrtc(clientOffer string) string {
-	// enc := &png.Encoder{
-	// 	CompressionLevel: png.NoCompression,
-	// }
 	// Prepare the configuration
 	config := webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
@@ -132,28 +129,22 @@ func setupWebrtc(clientOffer string) string {
 		},
 	}
 
-	// Create a new RTCPeerConnection
 	peerConnection, err := webrtc.NewPeerConnection(config)
 	if err != nil {
 		panic(err)
 	}
 
-	// Set the handler for ICE connection state
-	// This will notify you when the peer has connected/disconnected
 	peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		fmt.Printf("ICE Connection State has changed: %s\n", connectionState.String())
 	})
 
-	// Register data channel creation handling
 	peerConnection.OnDataChannel(func(d *webrtc.DataChannel) {
 		fmt.Printf("New DataChannel %s %d\n", d.Label(), d.ID())
 
 		if d.Label() == "foo" {
-			// Register channel opening handling
 			d.OnOpen(func() {
 				fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", d.Label(), d.ID())
 				for {
-					// start := time.Now()
 					data, _ := screenshot.Capture(0, 0, 640, 480)
 					go func() {
 						buf := new(bytes.Buffer)
@@ -161,8 +152,6 @@ func setupWebrtc(clientOffer string) string {
 						img := buf.Bytes()
 						d.Send(img)
 					}()
-					// elapsed := time.Since(start)
-					// fmt.Println(elapsed)
 				}
 			})
 
@@ -189,10 +178,6 @@ func setupWebrtc(clientOffer string) string {
 						robotgo.MouseClick("left")
 					case "rd":
 						robotgo.MouseClick("right")
-					case "lu":
-						robotgo.MouseToggle("left")
-					case "ru":
-						robotgo.MouseToggle("right")
 					}
 				})
 			}()
@@ -212,11 +197,11 @@ func setupWebrtc(clientOffer string) string {
 
 	})
 
-	// Wait for the offer to be pasted
+	// Get the offer
 	offer := webrtc.SessionDescription{}
 	Decode(clientOffer, &offer)
 
-	// Set the remote SessionDescription
+	// Set the remote session
 	err = peerConnection.SetRemoteDescription(offer)
 	if err != nil {
 		panic(err)
@@ -228,13 +213,11 @@ func setupWebrtc(clientOffer string) string {
 		panic(err)
 	}
 
-	// Sets the LocalDescription, and starts our UDP listeners
 	err = peerConnection.SetLocalDescription(answer)
 	if err != nil {
 		panic(err)
 	}
 
-	// Output the answer in base64 so we can paste it in browser
 	serverSDP := Encode(answer)
 	fmt.Println(serverSDP)
 	return serverSDP
