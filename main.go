@@ -75,8 +75,6 @@ func signalAck(serverSDP string) {
 }
 
 func serverInit() {
-	robotgo.SetKeyDelay(0)
-
 	serverId = randString(5)
 	e := godotenv.Load()
 	if e != nil {
@@ -179,10 +177,6 @@ func setupWebrtc(clientOffer string) string {
 						robotgo.MouseClick("left")
 					case "rd":
 						robotgo.MouseClick("right")
-					case "lu":
-						robotgo.MouseToggle("left")
-					case "ru":
-						robotgo.MouseToggle("right")
 					}
 				})
 			}()
