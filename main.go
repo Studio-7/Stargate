@@ -19,6 +19,7 @@ import (
 	"github.com/kbinani/screenshot"
 	"github.com/pion/webrtc"
 	"github.com/sacOO7/gowebsocket"
+	"regexp"
 )
 
 type ServerMsg struct {
@@ -143,12 +144,12 @@ func setupWebrtc(clientOffer string) string {
 				for {
 					// start := time.Now()
 					data, _ := screenshot.Capture(0, 0, 640, 480)
-					go func() {
-						buf := new(bytes.Buffer)
-						jpeg.Encode(buf, data, nil)
-						img := buf.Bytes()
-						d.Send(img)
-					}()
+					// go func() {
+					buf := new(bytes.Buffer)
+					jpeg.Encode(buf, data, &jpeg.Options{60})
+					img := buf.Bytes()
+					d.Send(img)
+					// }()
 					// elapsed := time.Since(start)
 					// fmt.Println(elapsed)
 				}
@@ -241,7 +242,8 @@ func Encode(obj interface{}) string {
 // Decode decodes the input from base64
 // It can optionally unzip the input after decoding
 func Decode(in string, obj interface{}) {
-	b, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(in, "\n", ""))
+	r, _ := regexp.Compile("\n")
+	b, err := base64.StdEncoding.DecodeString(r.ReplaceAllString(in, "")) //(strings.ReplaceAll(in, "\n", ""))
 	if err != nil {
 		fmt.Println(err)
 	}
