@@ -6,7 +6,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"image/jpeg"
+	"time"
+	// "image/jpeg"
 	"strconv"
 	"io/ioutil"
 	"log"
@@ -19,6 +20,7 @@ import (
 	"github.com/kbinani/screenshot"
 	"github.com/pion/webrtc"
 	"github.com/sacOO7/gowebsocket"
+	"github.com/pixiv/go-libjpeg/jpeg"
 	"regexp"
 )
 
@@ -142,16 +144,16 @@ func setupWebrtc(clientOffer string) string {
 		if d.Label() == "foo" {
 			d.OnOpen(func() {
 				for {
-					// start := time.Now()
-					data, _ := screenshot.Capture(0, 0, 640, 480)
+					start := time.Now()
+					data, _ := screenshot.Capture(0, 0, 1280, 720)
 					// go func() {
 					buf := new(bytes.Buffer)
-					jpeg.Encode(buf, data, &jpeg.Options{60})
+					jpeg.Encode(buf, data, &jpeg.EncoderOptions{Quality: 80})
 					img := buf.Bytes()
 					d.Send(img)
 					// }()
-					// elapsed := time.Since(start)
-					// fmt.Println(elapsed)
+					elapsed := time.Since(start)
+					fmt.Println(elapsed)
 				}
 			})
 
