@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"time"
+	// "time"
 	// "image/jpeg"
 	"strconv"
 	"io/ioutil"
@@ -144,16 +144,17 @@ func setupWebrtc(clientOffer string) string {
 		if d.Label() == "foo" {
 			d.OnOpen(func() {
 				for {
-					start := time.Now()
-					data, _ := screenshot.Capture(0, 0, 1280, 720)
-					// go func() {
-					buf := new(bytes.Buffer)
-					jpeg.Encode(buf, data, &jpeg.EncoderOptions{Quality: 80})
-					img := buf.Bytes()
-					d.Send(img)
-					// }()
-					elapsed := time.Since(start)
-					fmt.Println(elapsed)
+					// start := time.Now()
+					data, _ := screenshot.Capture(0, 0, 1280, 600)
+					go func() {
+						buf := new(bytes.Buffer)
+						jpeg.Encode(buf, data, &jpeg.EncoderOptions{Quality: 30})
+						img := buf.Bytes()
+						d.Send(img)
+						fmt.Println(len(img))
+					}()
+					// elapsed := time.Since(start)
+					// fmt.Println(elapsed)
 				}
 			})
 
