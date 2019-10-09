@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"image/jpeg"
+	// "image/jpeg"
 	"strconv"
 	"io/ioutil"
 	"log"
@@ -14,10 +14,13 @@ import (
 	"os"
 	"strings"
 
+	vpxEncoder "github.com/poi5305/go-yuv2webRTC/vpx-encoder"
+	"github.com/poi5305/go-yuv2webRTC/screenshot"
 	"github.com/go-vgo/robotgo"
 	"github.com/joho/godotenv"
-	"github.com/kbinani/screenshot"
-	"github.com/pion/webrtc"
+	"github.com/pion/webrtc/v2"
+	"github.com/pion/webrtc/v2/pkg/media"
+	// "github.com/pion/webrtc/pkg/media"
 	"github.com/sacOO7/gowebsocket"
 )
 
@@ -34,6 +37,8 @@ var serverId string
 var socket gowebsocket.Socket
 var signalUrl string
 
+const width = 853
+const height = 480
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func randString(n int) string {
@@ -126,10 +131,49 @@ func setupWebrtc(clientOffer string) string {
 		},
 	}
 
+	offer := webrtc.SessionDescription{}
+	Decode(clientOffer, &offer)
+
+	// mediaEngine := webrtc.MediaEngine{}
+	// err := mediaEngine.PopulateFromSDP(offer)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// // Create a new RTCPeerConnection
+	// api := webrtc.NewAPI(webrtc.WithMediaEngine(mediaEngine))
 	peerConnection, err := webrtc.NewPeerConnection(config)
 	if err != nil {
 		panic(err)
 	}
+
+	// Create a video track
+	videoTrack, err := peerConnection.NewTrack(webrtc.DefaultPayloadTypeVP8, rand.Uint32(), "video", "pion")
+	if err != nil {
+		panic(err)
+	}
+	if _, err = peerConnection.AddTrack(videoTrack); err != nil {
+		panic(err)
+	}
+
+	err = peerConnection.SetRemoteDescription(offer)
+	if err != nil {
+		panic(err)
+	}
+
+	answer, err := peerConnection.CreateAnswer(nil)
+	if err != nil {
+		panic(err)
+	}
+
+	err = peerConnection.SetLocalDescription(answer)
+	if err != nil {
+		panic(err)
+	}
+	go startEncoding(videoTrack)
+
+	serverSDP := Encode(answer)
+	fmt.Println(serverSDP)
 
 	peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		fmt.Printf("ICE Connection State has changed: %s\n", connectionState.String())
@@ -139,20 +183,21 @@ func setupWebrtc(clientOffer string) string {
 		fmt.Printf("New DataChannel %s %d\n", d.Label(), d.ID())
 
 		if d.Label() == "foo" {
-			d.OnOpen(func() {
-				for {
-					// start := time.Now()
-					data, _ := screenshot.Capture(0, 0, 640, 480)
-					go func() {
-						buf := new(bytes.Buffer)
-						jpeg.Encode(buf, data, nil)
-						img := buf.Bytes()
-						d.Send(img)
-					}()
-					// elapsed := time.Since(start)
-					// fmt.Println(elapsed)
-				}
-			})
+			// d.OnOpen(func() {
+				// for {
+				// 	// start := time.Now()
+				// 	data, _ := screenshot.Capture(0, 0, 640, 480)
+				// 	go func() {
+				// 		buf := new(bytes.Buffer)
+				// 		jpeg.Encode(buf, data, nil)
+				// 		img := buf.Bytes()
+				// 		d.Send(img)
+				// 	}()
+				// 	// elapsed := time.Since(start)
+				// 	// fmt.Println(elapsed)
+				// }
+				
+			// })
 
 			go func() {
 				d.OnMessage(func(msg webrtc.DataChannelMessage) {
@@ -196,26 +241,30 @@ func setupWebrtc(clientOffer string) string {
 
 	})
 
-	offer := webrtc.SessionDescription{}
-	Decode(clientOffer, &offer)
-
-	err = peerConnection.SetRemoteDescription(offer)
-	if err != nil {
-		panic(err)
-	}
-
-	answer, err := peerConnection.CreateAnswer(nil)
-	if err != nil {
-		panic(err)
-	}
-
-	err = peerConnection.SetLocalDescription(answer)
-	if err != nil {
-		panic(err)
-	}
-	serverSDP := Encode(answer)
-	fmt.Println(serverSDP)
 	return serverSDP
+}
+
+
+func startEncoding(videoTrack *webrtc.Track) {
+	encoder, err := vpxEncoder.NewVpxEncoder(width, height, 30, 1200, 5)
+	if err != nil {
+		panic(err)
+	}
+	// Capture
+	go func() {
+		for {
+			rgbaImg := screenshot.GetScreenshot(0, 0, width, height, width, height)
+			yuv := screenshot.RgbaToYuv(rgbaImg)
+			encoder.Input <- yuv
+		}
+	}()
+	// Encode
+	go func() {
+		for {
+			bs := <-encoder.Output
+			videoTrack.WriteSample(media.Sample{Data: bs, Samples: 900000})
+		}
+	}()
 }
 
 func main() {
@@ -241,7 +290,7 @@ func Encode(obj interface{}) string {
 // Decode decodes the input from base64
 // It can optionally unzip the input after decoding
 func Decode(in string, obj interface{}) {
-	b, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(in, "\n", ""))
+	b, err := base64.StdEncoding.DecodeString(strings.Replace(in, "\n", "", -1))
 	if err != nil {
 		fmt.Println(err)
 	}
