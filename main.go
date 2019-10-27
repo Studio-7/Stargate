@@ -44,6 +44,7 @@ const height = 480
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func randString(n int) string {
+	rand.Seed(time.Now().UTC().UnixNano())
 	b := make([]byte, n)
 	for i := range b {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
@@ -136,14 +137,6 @@ func setupWebrtc(clientOffer string) string {
 	offer := webrtc.SessionDescription{}
 	Decode(clientOffer, &offer)
 
-	// mediaEngine := webrtc.MediaEngine{}
-	// err := mediaEngine.PopulateFromSDP(offer)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// // Create a new RTCPeerConnection
-	// api := webrtc.NewAPI(webrtc.WithMediaEngine(mediaEngine))
 	peerConnection, err := webrtc.NewPeerConnection(config)
 	if err != nil {
 		panic(err)
@@ -172,6 +165,7 @@ func setupWebrtc(clientOffer string) string {
 	if err != nil {
 		panic(err)
 	}
+
 	go startEncoding(videoTrack)
 
 	serverSDP := Encode(answer)
@@ -185,22 +179,6 @@ func setupWebrtc(clientOffer string) string {
 		fmt.Printf("New DataChannel %s %d\n", d.Label(), d.ID())
 
 		if d.Label() == "foo" {
-			// d.OnOpen(func() {
-				// for {
-				// 	// start := time.Now()
-				// 	data, _ := screenshot.Capture(0, 0, 640, 480)
-				// 	go func() {
-				// 		buf := new(bytes.Buffer)
-				// 		jpeg.Encode(buf, data, nil)
-				// 		img := buf.Bytes()
-				// 		d.Send(img)
-				// 	}()
-				// 	// elapsed := time.Since(start)
-				// 	// fmt.Println(elapsed)
-				// }
-				
-			// })
-
 			go func() {
 				d.OnMessage(func(msg webrtc.DataChannelMessage) {
 					fmt.Printf("Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
@@ -248,7 +226,7 @@ func setupWebrtc(clientOffer string) string {
 
 
 func startEncoding(videoTrack *webrtc.Track) {
-	encoder, err := vpxEncoder.NewVpxEncoder(width, height, 30, 1200, 5)
+	encoder, err := vpxEncoder.NewVpxEncoder(width, height, 45, 1200, 10)
 	if err != nil {
 		panic(err)
 	}
@@ -264,7 +242,7 @@ func startEncoding(videoTrack *webrtc.Track) {
 	go func() {
 		for {
 			bs := <-encoder.Output
-			videoTrack.WriteSample(media.Sample{Data: bs, Samples: 900000})
+			videoTrack.WriteSample(media.Sample{Data: bs, Samples: 1})
 		}
 	}()
 }
