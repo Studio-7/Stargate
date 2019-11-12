@@ -37,6 +37,7 @@ RUN apt-get install tmux -y
 
 COPY . .
 ENV DISPLAY=:80
+ENV SIGNAL="ws://35.244.53.148:9000/server"
 #RUN sh run.sh
 #RUN screen -d -m X :2 -config dummy.conf
 #ENV DISPLAY=:2
