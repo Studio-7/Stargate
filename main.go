@@ -6,20 +6,25 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"time"
+
+	// "time"
+
 	// "image/jpeg"
-	"strconv"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 
-	vpxEncoder "github.com/poi5305/go-yuv2webRTC/vpx-encoder"
-	"github.com/poi5305/go-yuv2webRTC/screenshot"
-	"github.com/go-vgo/robotgo" 
+	"github.com/go-vgo/robotgo"
 	"github.com/joho/godotenv"
 	"github.com/pion/webrtc/v2"
 	"github.com/pion/webrtc/v2/pkg/media"
+	"github.com/poi5305/go-yuv2webRTC/screenshot"
+	vpxEncoder "github.com/poi5305/go-yuv2webRTC/vpx-encoder"
+
 	// "github.com/pion/webrtc/pkg/media"
 	"github.com/sacOO7/gowebsocket"
 	// "github.com/pixiv/go-libjpeg/jpeg"
@@ -63,7 +68,8 @@ func signalInit() {
 	if err != nil {
 		log.Println(err)
 	}
-	fmt.Println(string(initJson))
+	// fmt.Println(string(initJson))
+	fmt.Println(serverId)
 	socket.SendText(string(initJson))
 }
 
@@ -117,7 +123,8 @@ func serverInit() {
 	}
 
 	socket.OnDisconnected = func(err error, socket gowebsocket.Socket) {
-		log.Println("Disconnected from server ")
+		fmt.Println("Disconnected from server ")
+		os.Exit(1)
 		return
 	}
 
@@ -224,7 +231,6 @@ func setupWebrtc(clientOffer string) string {
 	return serverSDP
 }
 
-
 func startEncoding(videoTrack *webrtc.Track) {
 	encoder, err := vpxEncoder.NewVpxEncoder(width, height, 45, 1200, 10)
 	if err != nil {
@@ -248,6 +254,7 @@ func startEncoding(videoTrack *webrtc.Track) {
 }
 
 func main() {
+	log.SetOutput(ioutil.Discard)
 	serverInit()
 	select {}
 }

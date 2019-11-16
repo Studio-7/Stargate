@@ -32,17 +32,24 @@ RUN apt-get install xserver-xorg-video-dummy -y
 RUN apt-get install libsdl-sound1.2-dev libsdl-image1.2-dev libsdl-gfx1.2-dev libsdl-console-dev libsdl1.2-dev -y
 RUN apt-get install firefox -y
 RUN apt-get install tmux -y
-#RUN useradd -u 1000 -ms /bin/bash gamer
 
+RUN apt-get install -y mesa-utils xserver-xorg-video-all mame alsa-base alsa-utils -y
+RUN apt-get install libasound2 -y
+COPY asound.conf /etc/asound.conf
+# COPY default.conf /etc/modprobe.d/default.conf
+# RUN useradd -ms /bin/bash gamer
+# USER gamer
+# WORKDIR /home/gamer
+RUN apt-get install dosbox -y
 
 COPY . .
 ENV DISPLAY=:80
-ENV SIGNAL="ws://35.244.53.148:9000/server"
+ENV SIGNAL="ws://127.0.0.1:9000/server"
+# RUN chmod a+x ./run.sh
 #RUN sh run.sh
 #RUN screen -d -m X :2 -config dummy.conf
 #ENV DISPLAY=:2
 # RUN echo $DISPLAY
-#USER gamer
 #RUN firefox
 
 
@@ -51,5 +58,4 @@ ENV SIGNAL="ws://35.244.53.148:9000/server"
 # ENV GOSUMDB=off
 # RUN echo $GO111MODULE
 # RUN go build -o main
-
-CMD ["sh", "run.sh"]
+ENTRYPOINT ["sh", "run.sh"]
