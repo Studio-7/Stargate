@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"os/exec"
 	"time"
 )
@@ -27,11 +28,17 @@ func createInstance(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
 	p := make([]byte, 5)
-	// username := r.FormValue("username")
-	// game := r.FormValue("game")
+	username := r.FormValue("username")
+	game := r.FormValue("game")
+	fmt.Println(game)
 	containerName := randString(6)
+	pwd, err := os.Getwd()
+	if err != nil {
+		log.Println(err)
+	}
 	// command := "docker run --net=host --name " + containerName + " -d game-server"
-	cmd := exec.Command("docker", "run", "--net=host", "--name", containerName, "game-server")
+	fmt.Println(pwd + "/dosgames/" + username + ":/dosgames")
+	cmd := exec.Command("docker", "run", "--net=host", "--name", containerName, "-e", "GAME=/dosgames/"+game, "-v", pwd+"/dosgames/"+username+":/dosgames", "game-server")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		panic(err)
@@ -39,7 +46,7 @@ func createInstance(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		cmd.Run()
 	}()
-
+	// cmd.Run()
 	stdout.Read(p)
 	containerMap[string(p)] = containerName
 	w.Write(p)
