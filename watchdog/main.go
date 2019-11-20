@@ -7,11 +7,13 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"time"
 )
 
 // maps from serverId to containerId
 var containerMap map[string]string
+var displayCounter int
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -40,7 +42,8 @@ func createInstance(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	cmd := exec.Command("docker", "run", "--net=host", "--name", containerName, "-e", "GAME=/dosgames/"+game, "-v", pwd+"/dosgames/"+username+":/dosgames", "game-server")
+	cmd := exec.Command("docker", "run", "--net=host", "--name", containerName, "-e", "GAME=/dosgames/"+game, "-e", "DISPLAY=:"+strconv.Itoa(displayCounter), "-v", pwd+"/dosgames/"+username+":/dosgames", "game-server")
+	fmt.Println("docker", "run", "--net=host", "--name", containerName, "-e", "GAME=/dosgames/"+game, "-e", "DISPLAY=:"+strconv.Itoa(displayCounter), "-v", pwd+"/dosgames/"+username+":/dosgames", "game-server")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		panic(err)
@@ -49,8 +52,10 @@ func createInstance(w http.ResponseWriter, r *http.Request) {
 		cmd.Run()
 	}()
 	stdout.Read(p)
+	fmt.Println(p)
 	containerMap[string(p)] = containerName
 	w.Write(p)
+	displayCounter++
 }
 
 // stopInstance takes in a query parameter named id and stops the docker
@@ -67,6 +72,7 @@ func stopInstance(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	displayCounter = rand.Intn(100) + 1
 	containerMap = make(map[string]string)
 	http.HandleFunc("/create", createInstance)
 	http.HandleFunc("/stop", stopInstance)

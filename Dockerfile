@@ -43,7 +43,7 @@ RUN apt-get install libasound2 -y
 RUN apt-get install dosbox -y
 
 COPY . .
-ENV DISPLAY=:80
+# ENV DISPLAY=:80
 ENV SIGNAL="ws://127.0.0.1:9000/server"
 # RUN chmod a+x ./run.sh
 #RUN sh run.sh
