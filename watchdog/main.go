@@ -29,6 +29,9 @@ func randString(n int) string {
 // createInstance creates a new docker instance for each request and loads the game
 // for each user separately
 func createInstance(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	r.ParseForm()
 
 	p := make([]byte, 5)
@@ -61,6 +64,9 @@ func createInstance(w http.ResponseWriter, r *http.Request) {
 // stopInstance takes in a query parameter named id and stops the docker
 // instance of the server with that serverId
 func stopInstance(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	r.ParseForm()
 	serverId := r.URL.Query().Get("id")
 	containerId := containerMap[serverId]
